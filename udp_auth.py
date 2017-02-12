@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from thread import stack_size
 from threading import Thread
 import socket
 import time
@@ -16,6 +17,9 @@ DRCOM_MISC_TYPE_4 = '\x04'
 
 class UDPConnectionManager(Thread):
     def __init__(self, udp_delegate):
+    
+        stack_size(32768 * 10) # fix new thread error in some machines
+
         Thread.__init__(self)
         self.udp_delegate = udp_delegate
         self.challenge_res = 0
@@ -252,8 +256,3 @@ class UDPKeepAlive(Thread):
             print("[UDP]: DrCOM Server: MISC 4")
             self.drcom_pkt_id = 0
             self.alive_per_12s()
-
-
-if __name__ == '__main__':
-    udp = UDPKeepAlive("eth0.2", "201520133579", "201520133579")
-    udp.start()

@@ -60,7 +60,6 @@ class DrComSupplicant:
 
     def _info(self):
         print("Python Version of DrCom in Scut\n---------------------------\n"
-              "By Sheep\nScut Router QQ group: 262939451\n------------------------\n"
               "Ip: {}\nMac: {}".format(
             self.ip_addr, self.hw_addr_text
         ))
@@ -75,7 +74,7 @@ class DrComSupplicant:
             return pack('>6s6sH', self.server_hw_addr, self.hw_addr, self.ETH_P_PAE)
 
     def make_8021x_header(self, x_type, length=0):
-        return pack('BBH', 1, x_type, length)
+        return pack('>BBH', 1, x_type, length)
 
     def make_eap_pkt(self, eap_code, eap_id, eap_data):
         return pack('>BBH%ds' % len(eap_data), eap_code, eap_id, len(eap_data) + 4, eap_data)
@@ -111,7 +110,6 @@ class DrComSupplicant:
         EAP_TYPE_MD5CHALLENGE = 4
 
         data = self.sock.recv(65535)
-        # print("Received packet length: {}".format(len(data)))
 
         # Ethernet check
         ether_dst, ether_src, ether_type = unpack('>6s6sH', data[:14])
@@ -145,14 +143,17 @@ class DrComSupplicant:
                     print("[EAP]: Server->Client: Identify")
                     eap_pkt = self.make_eap_pkt(
                         EAP_CODE_RESPONSE, eap_id,
-                        pack('B%ds' % len(self.username), EAP_TYPE_IDENTITY, self.username))
+                        pack('>B%ds' % len(self.username), EAP_TYPE_IDENTITY, self.username))
                     pkt = self.make_ether_header() + self.make_8021x_header(
                         X_TYPE_EAP_PACKET, len(eap_pkt))
                     pkt += eap_pkt
+
+                    # fill end extra feature code
+                    pkt += pack('>5B4s', 0x0, 0x44, 0x61, 0x0, 0x0, socket.inet_aton(self.ip_addr))
+                    # fill zero
+                    pkt += b'\x00' * 52
                     self.sock.send(pkt)
-
                     print("[EAP]: Client->Server: ID Response")
-
                     self.state = 1
             else:
                 print("EAP check failed")
@@ -169,14 +170,16 @@ class DrComSupplicant:
                     challenge = data[24: 24 + eap_value_size]
                     response = md5(chr(eap_id) + self.password + challenge).digest()
                     pkt = self.make_ether_header()
-                    extra = self.password + '\x00Da*\x00}\xd8\xeeV'
+                    extra = self.password + pack('>5B4s', 0x0, 0x44, 0x61, 0x2a, 0x0, socket.inet_aton(self.ip_addr))
                     eap_pkt = self.make_eap_pkt(EAP_CODE_RESPONSE, eap_id, pack(
-                        'BB16s{}s'.format(len(extra)), EAP_TYPE_MD5CHALLENGE, 16, response, extra
+                        '>BB16s{}s'.format(len(extra)), EAP_TYPE_MD5CHALLENGE, 16, response, extra
                     ))
                     self.md5_load = '\x10' + response
                     print("Sended md5 is {}".format(self.md5_load.encode("hex")))
                     pkt += self.make_8021x_header(X_TYPE_EAP_PACKET, len(eap_pkt))
                     pkt += eap_pkt
+                    # fill zero
+                    pkt += '\x00' * 35
                     self.sock.send(pkt)
 
                     print("[EAP]: Client->Server: Md5 Challenge Response")

@@ -1,41 +1,61 @@
-## Python版 scut drcom 认证
+# DrCOM-Scut
 
-## 8月5日
-更新udp认证
-bug: 一次断开后，第二次链接有问题，可能是下线包发送有问题。
-`[Critical]: Server Reject Due to auth left in server, retry in few minutes`
-出现后下次断开重连即可
-
-## Scapy版客户端.
-## 请前往使用 https://github.com/scutclient/pyscutclient_drcom scapy版
+Python版 scut drcom 认证  
+本项目是Fork [seekwonderful/DrCOM-Scut](https://github.com/iseekwonderful/DrCOM-Scut) 
+由于该项目最后更新是在16年8月份，在17年2月份无法正常使用，原因是新版客户端在一些认证包上增加了一些特征码，通过参考[scutclient/scutclient](https://github.com/scutclient/scutclient)
+项目和通过`wireshark`抓包，补充这些特征码后使用。
 
 
-### 8月2日更新:
-1. 去除`scapy`依赖, 方便在openwrt上运行, 只需要安装`python-simple`和`python-codec`, 和 `coreutils-nohup`包（大小在2.7M左右，如果你的flash是4M的话需要外挂u盘）.
-2. ~~修复keep-alive问题。在C14测试稳定~~。
 
-###  Warning:
-1. macOS 不支持 python 2.7 的raw socket, 请使用scapy_example.py
-2.  如果你的路由器的CPU是AR71XX或MT762X,请前往华工路由器群下载C版本，资源占用较Python版本较少，且有开发团队支撑
-3.  Python版针对对`认证过程`感兴趣或路由器`奇葩CPU`的用户。
+## Getting Started
 
-### 硬件配置：
-Flash >= 8M 或 外挂U盘
+本程序支持安装有`python`及`python-codec`的环境下使用，包括但不限于Openwrt（本人未测试）、Padavan、Linux/Unix（本人未测试）等
 
-### 安装配置：
-1.   安装`openwrt`到路由器
-2.   使用ssh登陆到openwrt(win下推荐`putty`, linux和osx直接ssh)
-3.   更新openwrt包管理器: `opkg update`
-4.   安装依赖项: `opkg install python-simple, python-codec, coreutils-nohup`. 如果是openwrt bb(14)及之前版本, 请安装`python-mini`, 即： `opkg install, python-mini python-codec, coreutils-nohup`(**未测试**)
-5.   scp openwrt.py到路由器（以`/root`为例): `scp openwrt.py root@router_ip_address:~/` 将router_ip_address改为你的路由器ip即可。
-6.   运行: python openwrt.py -u username -p password -i 接口
-7.   第6步测试通过后, 使用 `nohup python openwrt.py -u username -p password -i 接口 &` 后台运行。(在openwrt上接口一般是eth0.1或者eth0.2)
+#### Warning:
+macOS 不支持 python 2.7 的raw socket，固无法使用
 
-### 资源占用: 
-在NewWifi mini(MT7620, 128M RAM, 16M Flash)上:
-	`6250  6196 root     S     7956   6%   0% python openwrt.py`
+### Prerequisites
 
-Python 客户端更新：https://github.com/iseekwonderful/DrCOM-Scut
-1. 去掉scapy依赖，只需要python-mini 和 python-codec
-2. 解决掉线问题
-使用树莓派或cpu不支持的同学可以试下
+本程序依赖`python`及`python-codec`
+
+本人使用的是newifi mini(MT7620, 128M RAM, 16M Flash)路由器，刷的是`padavan`固件
+所以挂接U盘且安装了opt后，通过`opkg install python`安装python后即可正常使用
+
+### Installing
+
+#### 路由器使用
+
+> python环境的安装，对于不同的固件，安装方式可能不同，具体的安装方式，请自行搜索
+
+1. 安装`openwrt`或`Padavan`之类固件到路由器
+2. 使用ssh登录上路由器
+3. 更新openwrt包管理器: opkg update
+4. 安装依赖项（具体安装情况可能不一样，
+如Openwrt可通过在[openwrt downloads](https://downloads.openwrt.org/chaos_calmer/15.05.1/)
+找到对应路由器cpu的型号的文件夹里面找到python的ipk包下载，然后上传（如scp、ftp）到路由器后安装
+）: 
+```
+opkg install python
+opkg install python-codec
+```
+5. 将本项目的`scutdrom.py`和`udp_auth.py`上传到路由器上
+6. 运行: `python scutdrom.py -u username -p password -i interface` 
+（其中`username`为你登录drcom使用的用户名，`password`为你登录drcom使用的用户名, `interface`为`WAN 口`对应的的网卡接口，, 一般情况下是`eth0`，对`OpenWRT`路由器一般为`eth0.2`, 对于`Padavan`为`eth2.2`,具体可以通过`ipconfig`命令查看）
+7. 第6步执行的命令加入到路由器的开机自启动列表，具体自行搜索对应方式
+
+#### Linux/Unix 使用（未测试）
+1. 确保机器上安装有python
+2. 通过`ipconfig`查看使用通信的网卡接口名称
+3. 运行: `python scutdrom.py -u username -p password -i interface` 
+
+## Authors
+
+*Initial work* - [sheep/iseekwonderful](https://github.com/iseekwonderful)
+
+*Fix* - [hexzhou](https://github.com/hexzhou)
+
+
+## See Also
+
+* [seekwonderful/DrCOM-Scut](https://github.com/iseekwonderful/DrCOM-Scut)
+* [scutclient/scutclient](https://github.com/scutclient/scutclient)
